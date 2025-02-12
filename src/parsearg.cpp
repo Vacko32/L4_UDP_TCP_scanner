@@ -35,6 +35,7 @@ void Args::printhelp(){
 }
 
 Args::Args(int l, char** dat) {
+  int udpflag = 0;
   len = l;
   vector<string> v;
   if(l == 1){
@@ -68,6 +69,10 @@ Args::Args(int l, char** dat) {
       j++;
 
     } else if (data[j] == "-t" || data[j] == "--pt" || data[j] == "-u" || data[j] == "--pu") {
+        udpflag = 0;
+        if(data[j] == "-u" || data[j] == "--pu"){
+            udpflag = 1;
+        }
         // we will be given prost and they can be range, num, or numbers 
         // we accepts number chars, -, and , 
         // other chars exits
@@ -87,10 +92,16 @@ Args::Args(int l, char** dat) {
             // we are at the endstring substring = data[j].substr(0, readidx);
             string substring2 = data[j].substr(0, readidx);
             int numx = stoi(substring2);
-            Ports.push_back(numx);
+            if(udpflag == 1){
+                UPorts.push_back(numx);
+            }
+            else{
+                Ports.push_back(numx);
+            }
             j++;
         
         }
+        
         else{
             string substring = data[j].substr(0, readidx);
             int num = stoi(substring); // the first port we read 
@@ -103,15 +114,24 @@ Args::Args(int l, char** dat) {
                 }
                 int num2 = stoi(data[j].substr(readidx + 1, idx2));
                 // we have the second number and we want to push ports into the vector 
-                cout << num2;
                 for(int i = num; i <= num2; i++){
-                    Ports.push_back(i);
+                    if(udpflag == 1){
+                        UPorts.push_back(i);
+                    }
+                    else{
+                        Ports.push_back(i);
+                    }
                 }
             }
             else if(data[j][readidx] == ','){
                 // we will be reading a list of ports, because of that we will 
                 // scan always until end of data[j][idx] or we reach the comma
-                Ports.push_back(num);
+                if(udpflag == 1){
+                    UPorts.push_back(num);
+                }
+                else{
+                    Ports.push_back(num);
+                }
                 readidx += 1;
                 int temp = readidx;
                 while(readidx < data[j].size()){
@@ -120,7 +140,12 @@ Args::Args(int l, char** dat) {
                     }
                     string sub = data[j].substr(temp, readidx);
                     int num = stoi(sub);
-                    Ports.push_back(num);
+                    if(udpflag == 1){
+                        UPorts.push_back(num);
+                    }
+                    else{
+                        Ports.push_back(num);
+                    }
                     temp = readidx + 1;
                     readidx++;
 

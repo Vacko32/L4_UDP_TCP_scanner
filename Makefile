@@ -4,10 +4,10 @@ SRC_DIR  = src
 TARGET   = main  
 TESTDIR  = tests
 
-SRC_MAIN = $(SRC_DIR)/main.cpp $(SRC_DIR)/parsearg.cpp
+SRC_MAIN = $(SRC_DIR)/main.cpp $(SRC_DIR)/parsearg.cpp $(SRC_DIR)/main.cpp
 OBJ_MAIN = $(SRC_MAIN:.cpp=.o)
 
-SRC_TEST = $(TESTDIR)/test.cpp $(SRC_DIR)/parsearg.cpp
+SRC_TEST = $(TESTDIR)/test.cpp $(SRC_DIR)/parsearg.cpp $(SRC_DIR)/main.cpp
 OBJ_TEST = $(SRC_TEST:.cpp=.o)
 
 all: main test

@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include "parsearg.h"
-
+int mainn(int argc, char** argv);
 
 
 #endif
