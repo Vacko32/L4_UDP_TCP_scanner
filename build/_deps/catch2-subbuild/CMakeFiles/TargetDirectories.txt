@@ -1,0 +1,3 @@
+/home/vacko/ipk2/ipk2025/build/_deps/catch2-subbuild/CMakeFiles/catch2-populate.dir
+/home/vacko/ipk2/ipk2025/build/_deps/catch2-subbuild/CMakeFiles/edit_cache.dir
+/home/vacko/ipk2/ipk2025/build/_deps/catch2-subbuild/CMakeFiles/rebuild_cache.dir
