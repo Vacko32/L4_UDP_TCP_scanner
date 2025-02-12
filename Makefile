@@ -1,18 +1,21 @@
 CXX      = g++
-CXXFLAGS = -Wall -Wextra -std=c++2a
+CXXFLAGS = -Wall -Wextra -std=c++2a -I$(SRC_DIR)
 SRC_DIR  = src
-TARGET   = main
+TARGET   = main  
+TESTDIR  = tests
 
-SRC      = $(SRC_DIR)/main.cpp $(SRC_DIR)/parsearg.cpp
-OBJ      = $(SRC:.cpp=.o)
+SRC_MAIN = $(SRC_DIR)/main.cpp $(SRC_DIR)/parsearg.cpp
+OBJ_MAIN = $(SRC_MAIN:.cpp=.o)
 
-all: $(TARGET)
+SRC_TEST = $(TESTDIR)/test.cpp $(SRC_DIR)/parsearg.cpp
+OBJ_TEST = $(SRC_TEST:.cpp=.o)
 
-$(TARGET): $(OBJ)
-	$(CXX) $(CXXFLAGS) $(OBJ) -o $(TARGET)
-
-$(SRC_DIR)/%.o: $(SRC_DIR)/%.cpp
+all: main test
+main: $(OBJ_MAIN)
+	$(CXX) $(CXXFLAGS) $(OBJ_MAIN) -o main
+test: $(OBJ_TEST)
+	$(CXX) $(CXXFLAGS) $(OBJ_TEST) -o test
+%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-
 clean:
-	rm -f $(TARGET) $(OBJ)
+	rm -f main test $(OBJ_MAIN) $(OBJ_TEST)
