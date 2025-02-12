@@ -8,14 +8,24 @@ class Args {
  public:
   int len;
   vector<string> data;
+  bool hasI;
+  string Interface;
+  bool hasP;
+  string Port;
+  bool hasW;
+  string W;
+  bool validD;
+  string domain;
+  bool list;
   Args(int l, char** dat);
-
+  bool nextisflag(vector<string> v, int idx);
+  void parsePort(vector<strings> ports);
   // functions for parsing
   // checking regexes of inputs
 
   // what combinations can be done what is mandatory what is not
 
-  // -i OR --interface is interface, list of activa interface
+  // -i OR --interface is interface or list of active interfaces
   // is being printed if value is not specified
   // additional info beyond inter list is welcomed
 
