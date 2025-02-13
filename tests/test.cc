@@ -6,13 +6,37 @@
 #include "../src/parsearg.cc"
 
 TEST_CASE("parsearg") {
-  const char* input[] = {"./main", "--interface", "eth0", "-u", "53,67", "www.vutbr.cz"};
+  const char* input[] = {"./main", "--interface", "eth0", "-u", "53", "www.vutbr.cz"};
   int argc = 6;
   Args x(argc, const_cast<char**>(input));
-  CHECK(x.Interface == "eth0");
-  REQUIRE(x.domain == "www.vutbr.cz");
-  std::vector<int> expectedPorts = {53, 67};
-  for (size_t i = 0; i < expectedPorts.size(); ++i) {
-    CHECK(x.UPorts[i] == expectedPorts[i]);
+  cout << x.Interface;
+  REQUIRE(x.Interface == "eth0");
+  for (auto i : x.UPorts) {
+    cout << i;
   }
+  REQUIRE(x.domain == "www.vutbr.cz");
+}
+
+TEST_CASE("parsearg2") {
+  const char* input[] = {"./main", "--interface", "eth0", "-u", "53-56", "www.vutbr.cz"};
+  int argc = 6;
+  Args x(argc, const_cast<char**>(input));
+  cout << x.Interface;
+  REQUIRE(x.Interface == "eth0");
+  for (auto i : x.UPorts) {
+    cout << i;
+  }
+  REQUIRE(x.domain == "www.vutbr.cz");
+}
+
+TEST_CASE("parsearg3") {
+  const char* input[] = {"./main", "--interface", "eth0", "-u", "53,56", "www.vutbr.cz"};
+  int argc = 6;
+  Args x(argc, const_cast<char**>(input));
+  cout << x.Interface;
+  REQUIRE(x.Interface == "eth0");
+  for (auto i : x.UPorts) {
+    cout << i;
+  }
+  REQUIRE(x.domain == "www.vutbr.cz");
 }

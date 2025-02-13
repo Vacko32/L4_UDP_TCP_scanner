@@ -50,26 +50,26 @@ Args::Args(int l, char** dat) {
   data = v;
   size_t j = 0;
 
-  while (j < data.size() - 1) {  // mby minus 1
-
+  while (j < data.size()) {  // mby minus 1
+    cout << data[j];
     // we want to indentify which flag are we processing
 
     if (data[j] == "-i" || data[j] == "--interface") {
       hasI = true;
-      cerr << "Error: Bad arguments, read heSADASDASlp!" << endl;
       // we can be at the end so care for segfault
       if (j != data.size() - 1) {
-        bool x = nextisflag(v, j + 1);
+        j++;
+        bool x = nextisflag(v, j);
         if (!x) {
-          Interface = data[j + 1];
+          Interface = data[j];
           list = false;
+          j++;
         } else {
           list = true;
         }
       } else {
         list = true;
       }
-      j++;
 
     } else if (data[j] == "-t" || data[j] == "--pt" || data[j] == "-u" || data[j] == "--pu") {
       udpflag = 0;
@@ -79,10 +79,10 @@ Args::Args(int l, char** dat) {
       // we will be given prost and they can be range, num, or numbers
       // we accepts number chars, -, and ,
       // other chars exits
-      j++;
+      j++;  // now we are at the porst arguent
       hasP = true;
       if (j == data.size()) {
-        cerr << "Error: Bad arguments, read help! call ./main" << endl;
+        cerr << "Error(1): Bad arguments, read help! call ./main" << endl;
         exit(1);
       }
       size_t readidx = 0;
@@ -101,7 +101,6 @@ Args::Args(int l, char** dat) {
           Ports.push_back(numx);
         }
         j++;
-
       }
 
       else {
@@ -147,11 +146,10 @@ Args::Args(int l, char** dat) {
             temp = readidx + 1;
             readidx++;
           }
-
         } else {
           // error
           cerr << j;
-          cerr << "Error: Bad arguments, read help! call ./main" << endl;
+          cerr << "Error(2): Bad arguments, read help! call ./main" << endl;
           exit(1);
         }
         j++;
@@ -160,9 +158,11 @@ Args::Args(int l, char** dat) {
     } else if (validD != true) {  // set the val name or ip address
       validD = true;
       domain = data[j];
+      j++;
     } else {
       // return error
-      cerr << "Error: Bad arguments, read help!" << endl;
+      cerr << "Error(3): Bad arguments, read help!" << endl;
+      cerr << Interface;
       exit(1);
     }
   }
