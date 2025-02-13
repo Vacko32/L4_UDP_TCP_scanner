@@ -23,6 +23,7 @@ class Args {
   bool nextisflag(vector<string> v, int idx);
   void parsePort(vector<string> ports);
   void printhelp();
+  void portchceck(int c);
 
   // functions for parsing
   // checking regexes of inputs

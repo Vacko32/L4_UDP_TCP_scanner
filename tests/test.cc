@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "../src/parsearg.cc"
-
+#include "../src/sockets.cc"
 TEST_CASE("parsearg") {
   const char* input[] = {"./main", "--interface", "eth0", "-u", "53", "www.vutbr.cz"};
   int argc = 6;
@@ -53,4 +53,12 @@ TEST_CASE("parsearg4") {
   }
   REQUIRE(x.domain == "www.vutbr.cz");
   REQUIRE(x.W == 3000);
+}
+
+TEST_CASE("sockets1") {
+  const char* input[] = {"./main", "--interface", "eth0", "-u", "53,56", "vut.cz"};
+  int argc = 6;
+  Args x(argc, const_cast<char**>(input));
+  Socket s(const_cast<char*>(x.domain.c_str()), x.UPorts[0]);
+  s.printinfo();
 }
