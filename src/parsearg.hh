@@ -1,9 +1,9 @@
 #ifndef parsearg_h
 #define parsearg_h
+#include <cctype>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cctype>
 using namespace std;
 class Args {
  public:
@@ -15,7 +15,7 @@ class Args {
   vector<int> Ports;
   vector<int> UPorts;
   bool hasW;
-  string W;
+  int W;
   bool validD;
   string domain;
   bool list;

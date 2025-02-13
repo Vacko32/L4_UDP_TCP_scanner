@@ -155,6 +155,24 @@ Args::Args(int l, char** dat) {
         j++;
       }
     } else if (data[j] == "-w" || data[j] == "--wait") {
+      j++;
+      if (j >= data.size()) {
+        cerr << "Error: Timeout is missing" << endl;
+        exit(1);
+      }
+      // now we error check
+      try {
+        int timeout = stoi(data[j]);
+        if (timeout <= 0) {
+          cerr << "Error: Timeout must be a positive number, got " << timeout << endl;
+          exit(1);
+        }
+        W = timeout;
+      } catch (const std::invalid_argument& e) {
+        cerr << "Error: Invalid timeout argument: " << data[j] << endl;
+        exit(1);
+      }
+      j++;
     } else if (validD != true) {  // set the val name or ip address
       validD = true;
       domain = data[j];

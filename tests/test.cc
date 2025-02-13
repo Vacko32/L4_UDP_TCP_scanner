@@ -40,3 +40,17 @@ TEST_CASE("parsearg3") {
   }
   REQUIRE(x.domain == "www.vutbr.cz");
 }
+
+TEST_CASE("parsearg4") {
+  const char* input[]
+      = {"./main", "--interface", "eth0", "-u", "53,56", "www.vutbr.cz", "-w", "3000"};
+  int argc = 8;
+  Args x(argc, const_cast<char**>(input));
+  cout << x.Interface;
+  REQUIRE(x.Interface == "eth0");
+  for (auto i : x.UPorts) {
+    cout << i;
+  }
+  REQUIRE(x.domain == "www.vutbr.cz");
+  REQUIRE(x.W == 3000);
+}
