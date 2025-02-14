@@ -198,3 +198,16 @@ Args::Args(int l, char** dat) {
     throw std::runtime_error("Error(3): Bad arguments, read help! ./main");
   }
 }
+
+// https://man7.org/linux/man-pages/man3/getifaddrs.3.html
+void Args::setupinterfaces() {
+  struct ifaddrs *ifaddr, *ifa;
+  int family, s;
+  char host[NI_MAXHOST];
+
+  if (getifaddrs(&ifaddr) == -1) {
+    throw std::runtime_error("Error(3): getifaddrs failed");
+  }
+
+  std::cout << "Available Network Interfaces:\n";
+}

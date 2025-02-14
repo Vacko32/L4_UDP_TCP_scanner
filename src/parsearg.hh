@@ -1,5 +1,8 @@
 #ifndef parsearg_h
 #define parsearg_h
+#include <ifaddrs.h>
+#include <netdb.h>
+
 #include <cctype>
 #include <iostream>
 #include <string>
@@ -14,16 +17,19 @@ class Args {
   bool hasP;
   vector<int> Ports;
   vector<int> UPorts;
+  vector<string> interfaces;
   bool hasW;
   int W;
   bool validD;
   string domain;
   bool list;
+
   Args(int l, char** dat);
   bool nextisflag(vector<string> v, int idx);
   void parsePort(vector<string> ports);
   void printhelp();
   void portchceck(int c);
+  void setupinterfaces();
 
   // functions for parsing
   // checking regexes of inputs
