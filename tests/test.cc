@@ -3,14 +3,15 @@
 #include <string>
 #include <vector>
 
+#include "../src/helptext.cc"
 #include "../src/parsearg.cc"
 #include "../src/sockets.cc"
 TEST_CASE("parsearg") {
   const char* input[] = {"./main", "--interface", "eth0", "-u", "53", "www.vutbr.cz"};
   int argc = 6;
   Args x(argc, const_cast<char**>(input));
-  cout << x.Interface;
-  REQUIRE(x.Interface == "eth0");
+  cout << x.mainInterface;
+  REQUIRE(x.mainInterface == "eth0");
   for (auto i : x.UPorts) {
     cout << i;
   }
@@ -21,8 +22,8 @@ TEST_CASE("parsearg2") {
   const char* input[] = {"./main", "--interface", "eth0", "-u", "53-56", "www.vutbr.cz"};
   int argc = 6;
   Args x(argc, const_cast<char**>(input));
-  cout << x.Interface;
-  REQUIRE(x.Interface == "eth0");
+  cout << x.mainInterface;
+  REQUIRE(x.mainInterface == "eth0");
   for (auto i : x.UPorts) {
     cout << i;
   }
@@ -33,8 +34,8 @@ TEST_CASE("parsearg3") {
   const char* input[] = {"./main", "--interface", "eth0", "-u", "53,56", "www.vutbr.cz"};
   int argc = 6;
   Args x(argc, const_cast<char**>(input));
-  cout << x.Interface;
-  REQUIRE(x.Interface == "eth0");
+  cout << x.mainInterface;
+  REQUIRE(x.mainInterface == "eth0");
   for (auto i : x.UPorts) {
     cout << i;
   }
@@ -46,8 +47,8 @@ TEST_CASE("parsearg4") {
       = {"./main", "--interface", "eth0", "-u", "53,56", "www.vutbr.cz", "-w", "3000"};
   int argc = 8;
   Args x(argc, const_cast<char**>(input));
-  cout << x.Interface;
-  REQUIRE(x.Interface == "eth0");
+  cout << x.mainInterface;
+  REQUIRE(x.mainInterface == "eth0");
   for (auto i : x.UPorts) {
     cout << i;
   }
@@ -60,7 +61,6 @@ TEST_CASE("sockets1") {
   int argc = 6;
   Args x(argc, const_cast<char**>(input));
   Socket s(const_cast<char*>(x.domain.c_str()), x.UPorts[0], 1);
-  s.printinfo();
 }
 
 TEST_CASE("sockets2") {
@@ -68,5 +68,4 @@ TEST_CASE("sockets2") {
   int argc = 6;
   Args x(argc, const_cast<char**>(input));
   Socket s(const_cast<char*>(x.domain.c_str()), x.UPorts[0], 1);
-  s.printinfo();
 }

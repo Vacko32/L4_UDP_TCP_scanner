@@ -15,47 +15,28 @@ void Args::portchceck(int c) {
 }
 
 void Args::printhelp() {
-  cout << "Usage: ./ipk-l4-scan [options] <domain-name | ip-address>" << endl;
-  cout << "Available options:" << endl;
-  cout << "  -i <interface>        Specify interface or list of active interfaces" << endl;
-  cout << "                         (If no value specified, the list of interfaces will be printed)"
-       << endl;
-  cout << "  -t <ports> OR --pt <ports>                  Set TCP port ranges (e.g., --pt 22 for "
-          "SSH port)"
-       << endl;
-  cout << "  -u <ports> OR --pu <ports>             Set UDP port ranges (e.g., --pu 1-65535 for "
-          "all UDP ports)"
-       << endl;
-  cout << "  -w <timeout>          Set timeout in milliseconds (default: 5000 ms)" << endl;
-  cout << "                         Timeout is for a single port scan" << endl;
-  cout << "  --wait <timeout>      Timeout in milliseconds for single port scan" << endl;
-  cout << "  <domain-name | ip>    Specify domain name or IP address to scan" << endl;
-
-  cout << "\nExample usage:\n";
-  cout << "./ipk-l4-scan -i eth0 --pt 21,22,143 --pu 53,67 localhost" << endl;
-  cout << "\nThis will scan the following ports on localhost (127.0.0.1):\n";
-  cout << "PORT       STATE\n";
-  cout << "21/tcp     closed\n";
-  cout << "22/tcp     open\n";
-  cout << "143/tcp    filtered\n";
-  cout << "53/udp     closed\n";
-  cout << "67/udp     open\n";
+  std::cout << HELP_TEXT;
+  exit(0);
 }
 
 Args::Args(int l, char** dat) {
   int udpflag = 0;
+  bool hasI;
+  bool hasP;
+  bool hasW;
+  bool validD;
   len = l;
   hasI = false;
   vector<string> v;
   if (l == 1) {
     printhelp();
   }
+
   for (int i = 1; i < l; i++) {
     v.push_back(dat[i]);
   }
   data = v;
   size_t j = 0;
-
   while (j < data.size()) {  // while reading the arguments
     // we want to indentify which flag are we processing
 
@@ -66,7 +47,7 @@ Args::Args(int l, char** dat) {
         j++;
         bool x = nextisflag(v, j);
         if (!x) {
-          Interface = data[j];
+          mainInterface = data[j];
           list = false;
           j++;
         } else {
@@ -199,7 +180,7 @@ Args::Args(int l, char** dat) {
   }
 }
 
-// https://man7.org/linux/man-pages/man3/getifaddrs.3.html
+// https://man7.org/linux/man-pages/man3/getifaddrs.3.html SOURCE CITATION NEEDED
 void Args::setupinterfaces() {
   struct ifaddrs *ifaddr, *ifa;
   int family, s;
@@ -210,4 +191,34 @@ void Args::setupinterfaces() {
   }
 
   std::cout << "Available Network Interfaces:\n";
+
+  // we got a linked list of possible interfaces
+
+  for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == NULL) {
+      continue;
+    }
+
+    family = ifa->ifa_addr->sa_family;
+
+    if (family == AF_PACKET) {
+      continue;  // skip if it is a packet
+    }
+
+    s = getnameinfo(ifa->ifa_addr,
+                    (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6),
+                    host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+    if (s != 0) {
+      throw std::runtime_error("Error(3): getnameinfo failed");
+    }
+    Interface temp = Interface(ifa->ifa_name, host);
+    interfaces.push_back(temp);
+  }
+  if (list == true) {
+    std::cout << "\n";
+    for (auto i : interfaces) {
+      std::cout << i.name << " " << i.ip << "\n";
+    }
+  }
+  freeifaddrs(ifaddr);
 }

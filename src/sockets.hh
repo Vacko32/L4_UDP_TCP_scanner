@@ -1,50 +1,56 @@
+// mv
 #ifndef sockets_h
 #define sockets_h
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <netinet/ip.h>   // For struct iphdr (IP header)
-#include <netinet/tcp.h>  // For struct tcphdr (TCP header)
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
+#include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <array>
 #include <cstring>
 #include <iostream>
+#include <optional>
 #include <string>
+#include <vector>
 // to create a socket, we need a port, and a valid domain or ip adrress
 // we will create sockets, then push them into some queue or something, and scan from there
 
-enum ipType {
+enum class IpType {
   v4,
   v6,
 };
 
-class Socket {
+template <typename IpHeader, typename ProtocolHeader>
+class Packet {
+  IpHeader* ipheader;
+  ProtocolHeader* protocolheader;
+
  public:
-  // values
+  Packet() = default;
+  [[nodiscard]] std::vector<char>
+  serialize();  // compiler warns when value from serialize is not used, turns packet to bytes.
+  void addIpHeader(IpType version);
+  void addProtocolHeader(...);
+};
+
+class Socket {
   struct addrinfo hints;
   struct addrinfo* res;
-  int status;
   int sockfd;
-  bool isTcp;
-  ipType iptype;
+  IpType iptype;
 
-  // creationg based on deepseek suggestion
-  char packet[1024];  // should be enough because we do not send any messages
-  struct iphdr* iph;  // both of these structure will be pointing at the packet
-  struct tcphdr* tcph;
-  struct udphdr* udph;
-
-  // functions
-  Socket(char* domain, int port, int tcp);
-  void printinfo();
-  void sendpacket();
+ public:
+  Socket(char* domain, int port, int socktype);
+  void createAndSendPacket();
   void setsocket();
-  void findiptype();
   void startscan();
   void determineipv();
-  void setiphead(int ipt);
+  void setiphead();
   ~Socket() { freeaddrinfo(res); };
 };
 

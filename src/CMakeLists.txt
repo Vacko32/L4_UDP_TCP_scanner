@@ -1,6 +1,6 @@
 file(GLOB_RECURSE SRC_FILES *.cc)
 
-add_executable(app main.cc parsearg.cc sockets.cc ${SRC_FILES})
+add_executable(app main.cc parsearg.cc sockets.cc helptext.cc ${SRC_FILES})
 
 
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
