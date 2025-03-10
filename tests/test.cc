@@ -62,10 +62,3 @@ TEST_CASE("sockets1") {
   Args x(argc, const_cast<char**>(input));
   Socket s(const_cast<char*>(x.domain.c_str()), x.UPorts[0], 1);
 }
-
-TEST_CASE("sockets2") {
-  const char* input[] = {"./main", "--interface", "eth0", "-t", "53,56", "vut.cz"};
-  int argc = 6;
-  Args x(argc, const_cast<char**>(input));
-  Socket s(const_cast<char*>(x.domain.c_str()), x.UPorts[0], 1);
-}

@@ -10,7 +10,7 @@ bool Args::nextisflag(vector<string> v, int idx) {
 
 void Args::portchceck(int c) {
   if (c > 65535) {
-    throw std::runtime_error("Error(3): Bad arguments, read help! ./main");
+    throw std::runtime_error("Error(1): Bad arguments, read help! ./main");
   }
 }
 
@@ -68,7 +68,7 @@ Args::Args(int l, char** dat) {
       j++;  // now we are at the porst arguent
       hasP = true;
       if (j == data.size()) {
-        throw std::runtime_error("Error(3): Bad arguments, read help! ./main");
+        throw std::runtime_error("Error(2): Bad arguments, read help! ./main");
       }
       size_t readidx = 0;
       while (isdigit(data[j][readidx])) {
@@ -145,21 +145,21 @@ Args::Args(int l, char** dat) {
         }
         j++;
       }
-    } else if ((data[j] == "-w" || data[j] == "--wait") && hasW == false) {
+    } else if ((data[j] == "-w" || data[j] == "--wait")) {
       hasW = true;
       j++;
       if (j >= data.size()) {
-        throw std::runtime_error("Error(3): Bad arguments, read help! ./main");
+        throw std::runtime_error("Error(4): Bad arguments, read help! ./main");
       }
       // now we error check
       try {
         int timeout = stoi(data[j]);
         if (timeout <= 0) {
-          throw std::runtime_error("Error(3): Bad arguments negative timeout, read help! ./main");
+          throw std::runtime_error("Error(5): Bad arguments negative timeout, read help! ./main");
         }
         W = timeout;
       } catch (const std::invalid_argument& e) {
-        throw std::runtime_error("Error(3): Bad arguments, read help! ./main");
+        throw std::runtime_error("Error(6): Bad arguments, read help! ./main");
       }
       j++;
     } else if (validD != true) {  // set the val name or ip address
@@ -168,15 +168,17 @@ Args::Args(int l, char** dat) {
       j++;
     } else {
       // return error
-      throw std::runtime_error("Error(3): Bad arguments, read help! ./main");
+
+      throw std::runtime_error("Error(7): Bad arguments, read help! ./main currentnly on data[j]:"
+                               + data[j]);
     }
   }
   // checks if input has necessarry requeirements
   if (validD != true) {
-    throw std::runtime_error("Error(3): Bad arguments, read help! ./main");
+    throw std::runtime_error("Error(8): Bad arguments, read help! ./main");
   }
-  if (hasP == false) {
-    throw std::runtime_error("Error(3): Bad arguments, read help! ./main");
+  if (hasP == false && list != true) {
+    throw std::runtime_error("Error(9): Bad arguments, read help! ./main");
   }
 }
 
@@ -189,8 +191,6 @@ void Args::setupinterfaces() {
   if (getifaddrs(&ifaddr) == -1) {
     throw std::runtime_error("Error(3): getifaddrs failed");
   }
-
-  std::cout << "Available Network Interfaces:\n";
 
   // we got a linked list of possible interfaces
 
@@ -214,11 +214,32 @@ void Args::setupinterfaces() {
     Interface temp = Interface(ifa->ifa_name, host);
     interfaces.push_back(temp);
   }
+
+  if (list == false) {
+    // we want to check if given interface is valid
+    bool found = false;
+    for (auto i : interfaces) {
+      if (i.name == mainInterface) {
+        found = true;
+        mainInterface_addr = i.ip;
+        std::cout << "Main interface" << mainInterface << " " << mainInterface_addr << "\n";
+        break;
+      }
+    }
+    if (found == false) {
+      throw std::runtime_error("Error(11): Bad arguments INVALID INTERFACE, read help! ./main");
+    }
+  }
   if (list == true) {
+    std::cout << "Available Network Interfaces:\n";
     std::cout << "\n";
     for (auto i : interfaces) {
       std::cout << i.name << " " << i.ip << "\n";
     }
+  } else {
+    interfaces.erase(std::remove_if(interfaces.begin(), interfaces.end(),
+                                    [&](auto& i) { return i.name != mainInterface; }),
+                     interfaces.end());
   }
   freeifaddrs(ifaddr);
 }

@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <iostream>
@@ -25,16 +26,35 @@ enum class IpType {
   v6,
 };
 
-template <typename IpHeader, typename ProtocolHeader>
+struct pseudo_header_ipv4 {
+  uint32_t src_addr;
+  uint32_t dst_addr;
+  uint8_t zero;
+  uint8_t protocol;
+  uint16_t tcp_len;
+};
+
 class Packet {
-  IpHeader* ipheader;
-  ProtocolHeader* protocolheader;
+  // ipv4 header
+  struct iphdr ip4;
+  // ipv6 header
+  struct ip6_hdr ip6;
+  // tcp header
+  struct tcphdr tcp;
+  // udp header
+  struct udphdr udp;
+  int v4_or_v6;
+  int tcp_or_udp;
+  // pseudo tcp header
+  pseudo_header_ipv4 p_tcp;
+  // pseudo udp header
+  pseudo_header_ipv4 p_udp;
 
  public:
-  Packet() = default;
+  Packet(IpType version, int port, int sockfd, int destionation_addr, int protocol_type);
   [[nodiscard]] std::vector<char>
   serialize();  // compiler warns when value from serialize is not used, turns packet to bytes.
-  void addIpHeader(IpType version);
+  void addIpHeader(IpType version, int protocol_type);
   void addProtocolHeader(...);
 };
 
@@ -46,11 +66,9 @@ class Socket {
 
  public:
   Socket(char* domain, int port, int socktype);
-  void createAndSendPacket();
-  void setsocket();
-  void startscan();
-  void determineipv();
-  void setiphead();
+  void createAndSendPacket(int port, int sock_type, int sockfd, std::string destionation_addr,
+                           std::string protocol_type);
+  void setsocket(std::string ip_adress, int st);
   ~Socket() { freeaddrinfo(res); };
 };
 
