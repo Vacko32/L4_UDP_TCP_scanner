@@ -8,15 +8,7 @@ int main(int argc, char** argv) {
   try {
     Args x(argc, argv);
     x.setupinterfaces();
-
-    for (int port : x.Ports) {
-      Socket s(const_cast<char*>(x.domain.c_str()), port, SOCK_STREAM);
-    }
-
-    for (int uport : x.UPorts) {
-      Socket s(const_cast<char*>(x.domain.c_str()), uport, SOCK_DGRAM);
-    }
-
+    x.scan_udp();
     return 0;
   } catch (exception& e) {
     cout << e.what() << endl;

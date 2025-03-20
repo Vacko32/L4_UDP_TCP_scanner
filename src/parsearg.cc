@@ -1,5 +1,7 @@
 #include "parsearg.hh"
 
+int GLOBAL_TIMEOUT = 3000;
+
 bool Args::nextisflag(vector<string> v, int idx) {
   if (v[idx] == "-t" || v[idx] == "--pt" || v[idx] == "-u" || v[idx] == "--pu" || v[idx] == "-w"
       || v[idx] == "--wait") {
@@ -11,6 +13,13 @@ bool Args::nextisflag(vector<string> v, int idx) {
 void Args::portchceck(int c) {
   if (c > 65535) {
     throw std::runtime_error("Error(1): Bad arguments, read help! ./main");
+  }
+}
+
+void Args::scan_udp() {
+  for (int uport : UPorts) {
+    udp_socket s(const_cast<char*>(domain.c_str()), uport, SOCK_DGRAM, mainInterface_addr,
+                 mainInterface);
   }
 }
 
@@ -158,6 +167,7 @@ Args::Args(int l, char** dat) {
           throw std::runtime_error("Error(5): Bad arguments negative timeout, read help! ./main");
         }
         W = timeout;
+        GLOBAL_TIMEOUT = W;
       } catch (const std::invalid_argument& e) {
         throw std::runtime_error("Error(6): Bad arguments, read help! ./main");
       }
@@ -221,11 +231,10 @@ void Args::setupinterfaces() {
     for (auto i : interfaces) {
       if (i.name == mainInterface) {
         found = true;
-        mainInterface_addr = i.ip;
-        std::cout << "Main interface" << mainInterface << " " << mainInterface_addr << "\n";
-        break;
+        mainInterface_addr.push_back(i.ip);
       }
     }
+
     if (found == false) {
       throw std::runtime_error("Error(11): Bad arguments INVALID INTERFACE, read help! ./main");
     }

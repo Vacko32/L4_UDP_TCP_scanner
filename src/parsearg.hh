@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 
+#include "UDPscan.hh"
 #include "helptext.hh"
 using namespace std;
 
@@ -21,11 +22,14 @@ class Interface {
 class Args {
  public:
   Args(int l, char** dat);
+  void scan_udp();
+  void setupinterfaces();
+
+ private:
   bool nextisflag(vector<string> v, int idx);
   void parsePort(vector<string> ports);
   void printhelp();
   void portchceck(int c);
-  void setupinterfaces();
   int len;
   int W;
   bool list;             // indicates if interface is specified
@@ -35,7 +39,7 @@ class Args {
   vector<int> Ports;
   vector<int> UPorts;
   vector<Interface> interfaces;  // all interfaces and ips
-  string mainInterface_addr;
+  vector<string> mainInterface_addr;
 };
 
 #endif

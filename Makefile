@@ -1,8 +1,8 @@
 BUILD_DIR=build
-MAKE_FLAGS=-j 6
-TEST_FLAGS=-j 50 --output-on-failure
+MAKE_FLAGS=-j6
+TEST_FLAGS=-j50 --output-on-failure
 
-.PHONY: all test
+.PHONY: all test clean setup zip
 
 all:
 	@mkdir -p $(BUILD_DIR)
@@ -10,7 +10,7 @@ all:
 	@mv ./build/src/app ./
 
 clean:
-	@rm app
+	@rm -f app
 
 test:
 	@ctest $(TEST_FLAGS) --test-dir "$(BUILD_DIR)"
@@ -20,4 +20,4 @@ setup:
 	@cd $(BUILD_DIR) && cmake ..
 
 zip:
-	@echo "Idk what to zip"
+	zip app.zip app
