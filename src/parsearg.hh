@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 
+#include "TCPscan.hh"
 #include "UDPscan.hh"
 #include "helptext.hh"
 using namespace std;
@@ -23,6 +24,7 @@ class Args {
  public:
   Args(int l, char** dat);
   void scan_udp();
+  void scan_tcp();
   void setupinterfaces();
 
  private:

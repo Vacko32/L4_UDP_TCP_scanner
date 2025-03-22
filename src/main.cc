@@ -9,6 +9,7 @@ int main(int argc, char** argv) {
     Args x(argc, argv);
     x.setupinterfaces();
     x.scan_udp();
+    x.scan_tcp();
     return 0;
   } catch (exception& e) {
     cout << e.what() << endl;

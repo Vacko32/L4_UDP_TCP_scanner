@@ -1,6 +1,6 @@
 #include "parsearg.hh"
 
-int GLOBAL_TIMEOUT = 3000;
+int GLOBAL_TIMEOUT = 5000;
 
 bool Args::nextisflag(vector<string> v, int idx) {
   if (v[idx] == "-t" || v[idx] == "--pt" || v[idx] == "-u" || v[idx] == "--pu" || v[idx] == "-w"
@@ -20,6 +20,12 @@ void Args::scan_udp() {
   for (int uport : UPorts) {
     udp_socket s(const_cast<char*>(domain.c_str()), uport, SOCK_DGRAM, mainInterface_addr,
                  mainInterface);
+  }
+}
+
+void Args::scan_tcp() {
+  for (int port : Ports) {
+    tcp_socket s(const_cast<char*>(domain.c_str()), port, mainInterface_addr, mainInterface);
   }
 }
 

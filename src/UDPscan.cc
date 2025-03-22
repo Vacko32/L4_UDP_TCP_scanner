@@ -23,9 +23,9 @@ udp_socket::udp_socket(char* domain, int port, int socktype,
                                 // https://beej.us/guide/bgnet/html/#getaddrinfoprepare-to-launch
   hints.ai_family = AF_UNSPEC;  // v4 and v6
   hints.ai_socktype = socktype;
-  hints.ai_flags = AI_PASSIVE;
+  hints.ai_flags = 0;
   char ipstr[INET6_ADDRSTRLEN];
-  int status = getaddrinfo(domain, std::to_string(port).c_str(), &hints, &res);
+  int status = getaddrinfo(domain, NULL, &hints, &res);
 
   if (status != 0) {
     std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
@@ -47,9 +47,8 @@ udp_socket::udp_socket(char* domain, int port, int socktype,
       addr = &(ipv6->sin6_addr);
       ipver = "IPv6";
     }
-
     inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-
+    std::cout << "adress " << ipstr << std::endl;
     adresses.push_back(ipstr);
   }
 
