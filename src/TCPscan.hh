@@ -32,12 +32,20 @@ struct pseudo_header {
   u_int16_t tcp_length;
 };
 
+struct ipv6_pseudo_header {
+  struct in6_addr source_address;
+  struct in6_addr dest_address;
+  u_int8_t zeros[3];
+  u_int32_t length;
+  u_int8_t next_header;
+};
+
 class tcp_socket {
  public:
   tcp_socket(char* domain, int port, std::vector<std::string> interfaces_addresses,
              std::string mainInterface);
   ~tcp_socket() { freeaddrinfo(res); };
-
+  int check_adresses(std::string addr1, std::string addr2);
  private:
   struct iphdr ip_header;
   struct ip6_hdr ip6_header;

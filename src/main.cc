@@ -12,7 +12,9 @@ int main(int argc, char** argv) {
     x.scan_tcp();
     return 0;
   } catch (exception& e) {
+    
     cout << e.what() << endl;
+
     return 1;
   }
 }

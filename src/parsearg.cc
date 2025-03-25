@@ -1,7 +1,7 @@
 #include "parsearg.hh"
 
 int GLOBAL_TIMEOUT = 5000;
-
+std::string Interfaceee;
 bool Args::nextisflag(vector<string> v, int idx) {
   if (v[idx] == "-t" || v[idx] == "--pt" || v[idx] == "-u" || v[idx] == "--pu" || v[idx] == "-w"
       || v[idx] == "--wait") {
@@ -63,6 +63,7 @@ Args::Args(int l, char** dat) {
         bool x = nextisflag(v, j);
         if (!x) {
           mainInterface = data[j];
+          Interfaceee = mainInterface;
           list = false;
           j++;
         } else {
@@ -156,6 +157,7 @@ Args::Args(int l, char** dat) {
           }
         } else {
           // error
+          printhelp();
           throw std::runtime_error("Error(3): Bad arguments, read help! ./main");
         }
         j++;
@@ -164,17 +166,20 @@ Args::Args(int l, char** dat) {
       hasW = true;
       j++;
       if (j >= data.size()) {
+        printhelp();
         throw std::runtime_error("Error(4): Bad arguments, read help! ./main");
       }
       // now we error check
       try {
         int timeout = stoi(data[j]);
         if (timeout <= 0) {
+          printhelp();
           throw std::runtime_error("Error(5): Bad arguments negative timeout, read help! ./main");
         }
         W = timeout;
         GLOBAL_TIMEOUT = W;
       } catch (const std::invalid_argument& e) {
+        printhelp();
         throw std::runtime_error("Error(6): Bad arguments, read help! ./main");
       }
       j++;
@@ -184,16 +189,18 @@ Args::Args(int l, char** dat) {
       j++;
     } else {
       // return error
-
+      printhelp();
       throw std::runtime_error("Error(7): Bad arguments, read help! ./main currentnly on data[j]:"
                                + data[j]);
     }
   }
   // checks if input has necessarry requeirements
   if (validD != true) {
+    printhelp();
     throw std::runtime_error("Error(8): Bad arguments, read help! ./main");
   }
   if (hasP == false && list != true) {
+    printhelp();
     throw std::runtime_error("Error(9): Bad arguments, read help! ./main");
   }
 }
@@ -228,6 +235,7 @@ void Args::setupinterfaces() {
       throw std::runtime_error("Error(3): getnameinfo failed");
     }
     Interface temp = Interface(ifa->ifa_name, host);
+    
     interfaces.push_back(temp);
   }
 
@@ -242,6 +250,7 @@ void Args::setupinterfaces() {
     }
 
     if (found == false) {
+      printhelp();
       throw std::runtime_error("Error(11): Bad arguments INVALID INTERFACE, read help! ./main");
     }
   }
