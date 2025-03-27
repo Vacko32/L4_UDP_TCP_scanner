@@ -20,6 +20,7 @@
 #include <future>
 #include <iostream>
 #include <optional>
+#include <random>
 #include <string>
 #include <thread>
 #include <vector>
@@ -35,9 +36,18 @@ struct pseudo_header {
 struct ipv6_pseudo_header {
   struct in6_addr source_address;
   struct in6_addr dest_address;
-  u_int8_t zeros[3];
   u_int32_t length;
-  u_int8_t next_header;
+  u_int8_t zeros[3];
+  u_int8_t protocol_type;
+};
+
+class output_tcp{
+  int port;
+  std::string ip;
+  int open_closed;
+  public:
+  output_tcp(int p, std::string i, int o) : port(p), ip(i), open_closed(o) {}
+  void print_state();
 };
 
 class tcp_socket {
@@ -46,7 +56,9 @@ class tcp_socket {
              std::string mainInterface);
   ~tcp_socket() { freeaddrinfo(res); };
   int check_adresses(std::string addr1, std::string addr2);
+
  private:
+  std::vector<output_tcp> out;
   struct iphdr ip_header;
   struct ip6_hdr ip6_header;
   struct tcphdr tcp_header;
@@ -56,8 +68,8 @@ class tcp_socket {
   int craft_packet(std::string source, std::string destination, int port);
   struct addrinfo hints;
   struct addrinfo* res;
-  std::vector<std::string> adresses;         // adresses that needs to be scanned
-  std::vector<std::string> source_adresses;  // for example 127.0.0.1 localhost
+  std::vector<std::string> adresses;
+  std::vector<std::string> source_adresses;
 };
 
 #endif

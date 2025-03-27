@@ -24,6 +24,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 // to create a socket, we need a port, and a valid domain or ip adrress
 // we will create sockets, then push them into some queue or something, and scan from there
 
@@ -32,12 +33,25 @@ enum class IpType {
   v6,
 };
 
+
+class output_udp{
+  int port; 
+  std::string ip;
+  int open_closed;
+  public:
+  output_udp(int p, std::string i, int o) : port(p), ip(i), open_closed(o) {}
+  void print_state();
+};
 class udp_socket {
   struct addrinfo hints;
   struct addrinfo* res;
+  int ported_temp_comp;
   int sockfd;
   int compatible_ip;
+  u_int16_t port_bind_num;
   IpType iptype;
+  std::vector<output_udp> out;
+  int open_closed;
   std::vector<std::string> adresses;  // adresses that needs to be scanned
   std::vector<std::string> source_adresses;
   int handle_udp_socket(const std::string& source, const std::string& destination,
@@ -46,13 +60,16 @@ class udp_socket {
   int sniff_session_activate(pcap_t* handle, int iptype);
   void createAndSendPacket(int port, int sock_type, int sockfd, std::string destionation_addr,
                            std::string protocol_type);
-  void setsocket(std::string ip_adress, int st, std::string bind_adr);
+  void setsocket(std::string ip_adress, int st, std::string bind_adr, int port);
 
  public:
   udp_socket(char* domain, int port, int socktype, std::vector<std::string> interfaces_addresses,
-             std::string mainInterace);
+             std::string mainInterace, std::vector<std::string>);
 
   ~udp_socket() { freeaddrinfo(res); };
+  void print_output();
 };
+
+
 
 #endif

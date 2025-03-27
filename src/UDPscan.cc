@@ -17,9 +17,9 @@ int timeout_split = -1;
  *
  */
 udp_socket::udp_socket(char *domain, int port, int socktype,
-                       std::vector<std::string> interfaces_addresses, std::string mainInterface)
+                       std::vector<std::string> interfaces_addresses, std::string mainInterface, std::vector<std::string> dest_adresses)
 {
-
+  ported_temp_comp = port;
   for (auto &i : interfaces_addresses)
   {
     size_t percent_pos = i.find('%');
@@ -31,44 +31,7 @@ udp_socket::udp_socket(char *domain, int port, int socktype,
 
   source_adresses = interfaces_addresses;
 
-  memset(&hints, 0,
-         sizeof hints);        // empying the struct, source:
-                               // https://beej.us/guide/bgnet/html/#getaddrinfoprepare-to-launch
-  hints.ai_family = AF_UNSPEC; // v4 and v6
-  hints.ai_socktype = socktype;
-  hints.ai_flags = 0;
-  char ipstr[INET6_ADDRSTRLEN];
-  int status = getaddrinfo(domain, NULL, &hints, &res);
-
-  if (status != 0)
-  {
-    std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
-    throw std::runtime_error("Error(3): getaddrinfo failed");
-  }
-  // we got a linked list of possible adresses
-  // we will iterate through them and if they are not in our adress vector we will add them
-  struct addrinfo *p;
-
-  for (p = res; p != NULL; p = p->ai_next)
-  {
-    void *addr;
-    const char *ipver;
-    if (p->ai_family == AF_INET)
-    { // IPv4
-      struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
-      addr = &(ipv4->sin_addr);
-      ipver = "IPv4";
-    }
-    else
-    { // IPv6
-      struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)p->ai_addr;
-      addr = &(ipv6->sin6_addr);
-      ipver = "IPv6";
-    }
-    inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-
-    adresses.push_back(ipstr);
-  }
+  adresses = dest_adresses;
 
   int checker = 0;
   // for each address and for each adress of interfaces make packet and send it, port is determined
@@ -86,23 +49,25 @@ udp_socket::udp_socket(char *domain, int port, int socktype,
       {
         continue;
       }
-      setsocket(i, socktype, j); // hopefully correct
+      setsocket(i, socktype, j, port); // hopefully correct
       int resp = handle_udp_socket(j, i, mainInterface, port);
       if (resp == 3)
       {
-        std::cout << i << " " << port << " udp closed" << std::endl;
+        output_udp temp = output_udp(port, i, 1); // closed add
+        out.push_back(temp);
 
         checker = 1;
       }
       close(sockfd);
+
     }
     if (checker != 1)
     {
-      std::cout << i << " " << port << " udp open" << std::endl;
+
+      output_udp temp = output_udp(port, i, 0); // open add
+      out.push_back(temp);
     }
   }
-  // we didnt get an ICMP response, so the port is open
-
   return;
 }
 
@@ -114,19 +79,9 @@ udp_socket::udp_socket(char *domain, int port, int socktype,
  * @param sock_type  type of the socket, SOCK_DGRAM only supported
  * @param bind_adr   adress on which we will be binding the socket
  */
-void udp_socket::setsocket(std::string ip_adress, int sock_type, std::string bind_adr)
+void udp_socket::setsocket(std::string ip_adress, int sock_type, std::string bind_adr, int port)
 {
   int version;
-
-  switch (hints.ai_socktype)
-  {
-  case (SOCK_STREAM):
-    sock_type = IPPROTO_TCP;
-    break;
-  case (SOCK_DGRAM):
-    sock_type = IPPROTO_UDP;
-    break;
-  }
 
   for (char i : ip_adress)
   {
@@ -141,22 +96,12 @@ void udp_socket::setsocket(std::string ip_adress, int sock_type, std::string bin
       break;
     }
   }
-  if (sock_type == IPPROTO_TCP)
-  {
-    sockfd = socket(version, SOCK_RAW, sock_type);
-    if (sockfd == -1)
-    {
-      throw std::runtime_error("Error(4): udp_socket creation failed");
-    }
-  }
-  else
-  {
-    sockfd = socket(version, SOCK_DGRAM, sock_type);
 
-    if (sockfd == -1)
-    {
-      throw std::runtime_error("Error(4): udp_socket creation failed");
-    }
+  sockfd = socket(version, SOCK_DGRAM, IPPROTO_UDP);
+
+  if (sockfd == -1)
+  {
+    throw std::runtime_error("Error(4): udp_socket creation failed");
   }
 
   if (version == PF_INET)
@@ -165,7 +110,7 @@ void udp_socket::setsocket(std::string ip_adress, int sock_type, std::string bin
 
     memset(&src_addr, 0, sizeof(src_addr));
     src_addr.sin_family = AF_INET;
-    src_addr.sin_port = htons(22223);
+    src_addr.sin_port = 0;
     src_addr.sin_addr.s_addr = inet_addr(bind_adr.c_str());
     if (bind(sockfd, (struct sockaddr *)&src_addr, sizeof(src_addr)) < 0)
     {
@@ -175,6 +120,17 @@ void udp_socket::setsocket(std::string ip_adress, int sock_type, std::string bin
       close(sockfd);
       throw std::runtime_error("Error(4): udp_socket creation failed");
     }
+
+    // retrieve the given port
+    struct sockaddr_in actual;
+    socklen_t len = sizeof(actual);
+    if (getsockname(sockfd, (struct sockaddr *)&actual, &len) == -1)
+    {
+      std::cerr << "Failed to get port: " << strerror(errno) << std::endl;
+      close(sockfd);
+      throw std::runtime_error("Error(4): udp_socket creation failed");
+    }
+    port_bind_num = actual.sin_port;
   }
   else
   {
@@ -182,7 +138,7 @@ void udp_socket::setsocket(std::string ip_adress, int sock_type, std::string bin
     struct sockaddr_in6 src_addr;
     memset(&src_addr, 0, sizeof(src_addr));
     src_addr.sin6_family = AF_INET6;
-    src_addr.sin6_port = htons(22223);
+    src_addr.sin6_port = 0;
 
     src_addr.sin6_scope_id = if_nametoindex(Interfaceee.c_str());
 
@@ -201,6 +157,16 @@ void udp_socket::setsocket(std::string ip_adress, int sock_type, std::string bin
       close(sockfd);
       throw std::runtime_error("Error(4): udp_socket creation failed");
     }
+    // retrieve the given port
+    struct sockaddr_in actual;
+    socklen_t len = sizeof(actual);
+    if (getsockname(sockfd, (struct sockaddr *)&actual, &len) == -1)
+    {
+      std::cerr << "Failed to get port: " << strerror(errno) << std::endl;
+      close(sockfd);
+      throw std::runtime_error("Error(4): udp_socket creation failed");
+    }
+    port_bind_num = actual.sin_port;
   }
 };
 
@@ -234,7 +200,7 @@ int udp_socket::handle_udp_socket(const std::string &source, const std::string &
     return 0;
   }
 
-  if (pcap_set_timeout(handle, GLOBAL_TIMEOUT / timeout_split) != 0)
+  if (pcap_set_timeout(handle, 75) != 0)
   {
     std::cerr << "Couldn't set timeout: " << pcap_geterr(handle) << std::endl;
     pcap_close(handle);
@@ -294,6 +260,7 @@ int udp_socket::handle_udp_socket(const std::string &source, const std::string &
 
     int retValue = future_result.get();
     t1.join(); // join thred
+    pcap_close(handle);
     return retValue;
 
     // Poll for ICMP responses
@@ -341,13 +308,15 @@ int udp_socket::handle_udp_socket(const std::string &source, const std::string &
 
     int retValue = future_result.get();
     t1.join(); // join thred
+    pcap_close(handle);
     return retValue;
 
-    return 1;
+    
   }
   else if (x == 3)
   {
     // IPV6 both implementation
+    pcap_close(handle);
     return 1;
   }
 }
@@ -364,19 +333,20 @@ int udp_socket::sniff_session_activate(pcap_t *handle, int iptype)
 
   // pcap documentation seeting filter
   std::string filter = "icmp or icmp6";
+
   struct bpf_program fp;
   if (pcap_compile(handle, &fp, filter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1)
   {
     std::cerr << "Couldn't parse filter " << filter << ": " << pcap_geterr(handle) << std::flush;
-    pcap_close(handle);
-    pcap_freecode(&fp);
+    
+    
     return 0;
   }
   if (pcap_setfilter(handle, &fp) == -1)
   {
     std::cerr << "Couldn't install filter " << filter << ": " << pcap_geterr(handle) << std::flush;
     pcap_freecode(&fp);
-    pcap_close(handle);
+    
     return 0;
   }
 
@@ -390,44 +360,49 @@ int udp_socket::sniff_session_activate(pcap_t *handle, int iptype)
     res = pcap_next_ex(handle, &header, &packet);
 
     if (res == 1 && iptype == 0)
-    { // A packet was captured
-      // we skip first 14 bytes
+    {
+      const u_char *data_ptr = packet + 64;
+      uint16_t value = *reinterpret_cast<const uint16_t *>(data_ptr);
 
-      struct ip *iph = reinterpret_cast<struct ip *>(const_cast<u_char *>(packet) + 14);
-      if (iph->ip_p == IPPROTO_ICMP)
+      if (ntohs(value) == ported_temp_comp)
       {
-
-        int ipHeaderLength = iph->ip_hl * 4;
-        struct icmp *icmph = reinterpret_cast<struct icmp *>(reinterpret_cast<u_char *>(iph) + ipHeaderLength);
-        if (icmph->icmp_type == ICMP_DEST_UNREACH)
-        {
-          // Found the ICMP Destination ureachable response, so exit immediately
-
-          pcap_freecode(&fp);
-
-          pcap_close(handle);
-          return 3;
-        }
+        // Found the UDP response, so exit immediately
+        pcap_freecode(&fp);
+        
+        return 3;
+      }
+      else
+      {
+        continue;
       }
     }
     else if (res == 1 && iptype == 1)
     { // A packet was captured
-
-      pcap_freecode(&fp);
-
-      pcap_close(handle);
-      return 3;
+      const u_char *data_ptr = packet + 104;
+      uint16_t value = *reinterpret_cast<const uint16_t *>(data_ptr);
+      
+      if (ntohs(value) == ported_temp_comp)
+      {
+        // Found the UDP response, so exit immediately
+        pcap_freecode(&fp);
+        
+        return 3;
+      }
+      else
+      {
+        continue;
+      }
     }
     else if (res == -1)
     {
       pcap_freecode(&fp);
-      pcap_close(handle);
+      
       return 0;
     }
   }
 
   pcap_freecode(&fp);
-  pcap_close(handle);
+  
   return 1;
 }
 /**
@@ -477,3 +452,23 @@ int udp_socket::check_adresses(std::string addr1, std::string addr2)
   else
     return 3;
 };
+
+void udp_socket::print_output()
+{
+  for (auto i : out)
+  {
+    i.print_state();
+  }
+}
+
+void output_udp::print_state()
+{
+  if (open_closed == 1)
+  {
+    std::cout << ip << " " << port << " udp closed" << std::endl;
+  }
+  else
+  {
+    std::cout << ip << " " << port << " udp open" << std::endl;
+  }
+}

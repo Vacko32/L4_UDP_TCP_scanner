@@ -17,9 +17,41 @@ void Args::portchceck(int c) {
 }
 
 void Args::scan_udp() {
+
+  
+  // first we find destinations for udp 
+  fill_scan_destinations_udp(const_cast<char*>(domain.c_str()));
+  
   for (int uport : UPorts) {
-    udp_socket s(const_cast<char*>(domain.c_str()), uport, SOCK_DGRAM, mainInterface_addr,
-                 mainInterface);
+    port_queue.push(uport);
+  }
+
+  
+  
+  std::vector<std::thread> threads;
+  for (int i = 0; i < MAX_THREADS; i++) {
+    threads.emplace_back(std::thread(&Args::executor, this));
+  }
+  for (auto& t : threads) {
+    t.join();
+  }
+  
+}
+
+void Args::executor(){
+  while(true){
+    int port;
+    {
+      std::unique_lock<std::mutex> lock(mtx);
+      if (port_queue.empty()){
+        return;
+      }
+      port = port_queue.front();
+      port_queue.pop();
+    }
+    udp_socket s(const_cast<char*>(domain.c_str()), port, SOCK_DGRAM, mainInterface_addr, mainInterface, scan_destinations);
+    std::lock_guard<std::mutex> lock(mtx2_print);
+    s.print_output();
   }
 }
 
@@ -32,6 +64,89 @@ void Args::scan_tcp() {
 void Args::printhelp() {
   std::cout << HELP_TEXT;
   exit(0);
+}
+
+
+void Args::fill_scan_destinations_tcp(char* domain){
+  // first we null scan_destination
+  while(!scan_destinations.empty()){
+    scan_destinations.pop_back();
+  }
+  struct addrinfo hints;
+  struct addrinfo* res;
+  memset(&hints, 0, sizeof hints);
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+  char ipstr[INET6_ADDRSTRLEN];
+  int status = getaddrinfo(domain, NULL, &hints, &res);
+  if (status != 0) {
+    std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
+    std::cerr << "domain: " << domain << std::endl;
+    throw std::runtime_error("Error(3): getaddrinfo failed");
+  }
+  struct addrinfo *p;
+  for (p = res; p != NULL; p = p->ai_next){
+    void *addr;
+    const char *ipver;
+    if (p->ai_family == AF_INET)
+    { // IPv4
+      struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+      addr = &(ipv4->sin_addr);
+      
+    }
+    else if (p->ai_family == AF_INET6) {
+      struct sockaddr_in6 *ipv6 = reinterpret_cast<struct sockaddr_in6 *>(p->ai_addr);
+      addr = &(ipv6->sin6_addr);
+    }
+    if(addr){
+    if (inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr)) != nullptr) {
+        std::cout << "IP TCP ADDED: " << ipstr << std::endl;
+        scan_destinations.push_back(ipstr);
+      }
+    }
+  }
+}
+
+
+
+void Args::fill_scan_destinations_udp(char* domain){
+  struct addrinfo hints;
+  struct addrinfo* res;
+  memset(&hints, 0, sizeof hints);
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_DGRAM;
+  hints.ai_flags = AI_PASSIVE;
+  char ipstr[INET6_ADDRSTRLEN];
+  int status = getaddrinfo(domain, NULL, &hints, &res);
+  if (status != 0) {
+    std::cerr << "getaddrinfo: " << gai_strerror(status) << std::endl;
+    std::cerr << "domain: " << domain << std::endl;
+    throw std::runtime_error("Error(3): getaddrinfo failed");
+  }
+  struct addrinfo *p;
+  for (p = res; p != NULL; p = p->ai_next){
+    void *addr;
+    const char *ipver;
+    if (p->ai_family == AF_INET)
+    { // IPv4
+      struct sockaddr_in *ipv4 = (struct sockaddr_in *)p->ai_addr;
+      addr = &(ipv4->sin_addr);
+      
+    }
+    else if (p->ai_family == AF_INET6) {
+      struct sockaddr_in6 *ipv6 = reinterpret_cast<struct sockaddr_in6 *>(p->ai_addr);
+      addr = &(ipv6->sin6_addr);
+    }
+    if(addr){
+    if (inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr)) != nullptr) {
+        std::cout << "IP ADDED: " << ipstr << std::endl;
+        scan_destinations.push_back(ipstr);
+      }
+    }
+  }
+
+  return;
 }
 
 Args::Args(int l, char** dat) {
