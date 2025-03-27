@@ -53,10 +53,10 @@ class output_tcp{
 class tcp_socket {
  public:
   tcp_socket(char* domain, int port, std::vector<std::string> interfaces_addresses,
-             std::string mainInterface);
+             std::string mainInterface, std::vector<std::string> dest_adresses);
   ~tcp_socket() { freeaddrinfo(res); };
   int check_adresses(std::string addr1, std::string addr2);
-
+  void print_output();
  private:
   std::vector<output_tcp> out;
   struct iphdr ip_header;

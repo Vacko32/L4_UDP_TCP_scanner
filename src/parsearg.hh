@@ -38,6 +38,7 @@ class Args {
   std::condition_variable cv;
   static constexpr int MAX_THREADS = 50;  // shared between all instances of the class
   void executor();
+  void executor_tcp();
   void fill_scan_destinations_tcp(char* domain);
   bool nextisflag(vector<string> v, int idx);
   void parsePort(vector<string> ports);

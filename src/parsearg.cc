@@ -16,6 +16,39 @@ void Args::portchceck(int c) {
   }
 }
 
+void Args::scan_tcp() {
+  fill_scan_destinations_tcp(const_cast<char*>(domain.c_str()));
+  for (int port : Ports) {
+    port_queue.push(port);
+  }
+
+  std::vector<std::thread> threads;
+  for (int i = 0; i < MAX_THREADS; i++) {
+    threads.emplace_back(std::thread(&Args::executor_tcp, this));
+  }
+  for (auto& t : threads) {
+    t.join();
+  }
+}
+
+void Args::executor_tcp(){
+  while(true){
+    int port;
+    {
+      std::unique_lock<std::mutex> lock(mtx);
+      if (port_queue.empty()){
+        return;
+      }
+      port = port_queue.front();
+      port_queue.pop();
+    }
+    // interface addreses is wrong 
+    tcp_socket s(const_cast<char*>(domain.c_str()), port, mainInterface_addr, mainInterface, scan_destinations);
+    std::lock_guard<std::mutex> lock(mtx2_print);
+    s.print_output();
+  }
+}
+
 void Args::scan_udp() {
 
   
@@ -55,11 +88,7 @@ void Args::executor(){
   }
 }
 
-void Args::scan_tcp() {
-  for (int port : Ports) {
-    tcp_socket s(const_cast<char*>(domain.c_str()), port, mainInterface_addr, mainInterface);
-  }
-}
+
 
 void Args::printhelp() {
   std::cout << HELP_TEXT;
@@ -86,6 +115,7 @@ void Args::fill_scan_destinations_tcp(char* domain){
     throw std::runtime_error("Error(3): getaddrinfo failed");
   }
   struct addrinfo *p;
+  
   for (p = res; p != NULL; p = p->ai_next){
     void *addr;
     const char *ipver;
@@ -99,12 +129,13 @@ void Args::fill_scan_destinations_tcp(char* domain){
       struct sockaddr_in6 *ipv6 = reinterpret_cast<struct sockaddr_in6 *>(p->ai_addr);
       addr = &(ipv6->sin6_addr);
     }
-    if(addr){
+    
     if (inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr)) != nullptr) {
-        std::cout << "IP TCP ADDED: " << ipstr << std::endl;
-        scan_destinations.push_back(ipstr);
-      }
-    }
+          
+          scan_destinations.push_back(ipstr);}
+          
+    
+    
   }
 }
 
@@ -140,7 +171,7 @@ void Args::fill_scan_destinations_udp(char* domain){
     }
     if(addr){
     if (inet_ntop(p->ai_family, addr, ipstr, sizeof(ipstr)) != nullptr) {
-        std::cout << "IP ADDED: " << ipstr << std::endl;
+        
         scan_destinations.push_back(ipstr);
       }
     }
